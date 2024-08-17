@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:expense_tracker/models/expense.dart';
 
 class NewExpense extends StatefulWidget {
   const NewExpense({super.key});
@@ -20,6 +21,42 @@ class _NewExpenseState extends State<NewExpense> {
       TextEditingController(); // text editing controller is a class that is optimized for handling user inputs
 
   final _amountController = TextEditingController();
+
+  DateTime? _selectedDate;
+
+  void _presentDatePicker() async {
+    final currentDate = DateTime.now();
+    final firstDate = DateTime(
+        currentDate.year - 1,
+        currentDate.month,
+        currentDate
+            .day); // the year month and day of a DateTime object can be accessed and set like this
+    final pickedDate = await showDatePicker(
+      // await makes flutter halt the execution of this function the future returns it's result, which is then stored in the variable pickedDate; await can only be used in presence of async
+      context: context,
+      initialDate: currentDate,
+      firstDate: firstDate,
+      lastDate: currentDate,
+    ); // takes in the context of the widget it's being displayed in
+
+    setState(() {
+      _selectedDate = pickedDate;
+    });
+
+    // showDatePicker returns a value of type DateTime? wrapped in Future, i.e, returns a value of type Future<DateTime?>, i.e, a Future<DateTime?> object
+    // A future object is simply an object from the future; it's an object that wraps a value of some data type which you don't have yet but which you will have in the future
+
+    /* var futureObject = showDatePicker(
+      context: context,
+      initialDate: currentDate,
+      firstDate: firstDate,
+      lastDate: currentDate,
+    );
+
+    futureObject.then((value) {});
+ */
+    // each future object has a then () method, which takes a function having a parameter of the type of the future object as it's argument, and executes this function when the future object gets the value it's waiting for (called the result of the future) by passing this value as an argument to the function passed to it
+  }
 
   // when you create a text editing controller, you also have to tell flutter to delete that controller when the widget it is created in is
   // not needed anymore (for ex, when modal overlay is closed); otherwise, it will live on in memory even when the widget is not visible anymore consuming memory
@@ -80,9 +117,13 @@ class _NewExpenseState extends State<NewExpense> {
                   crossAxisAlignment: CrossAxisAlignment
                       .center, // vertically centre the children of the row
                   children: [
-                    const Text('Selected Date'),
+                    Text(
+                      _selectedDate == null
+                          ? 'No Date Selected'
+                          : formatter.format(_selectedDate!),
+                    ), // the exclamatory sign in front of a variable that can be null forces dart to assume that it can't be null
                     IconButton(
-                      onPressed: () {},
+                      onPressed: _presentDatePicker,
                       icon: const Icon(Icons.calendar_month),
                     )
                   ],
