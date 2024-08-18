@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:expense_tracker/models/expense.dart';
+import 'package:expense_tracker/widgets/expenses.dart';
 
 class NewExpense extends StatefulWidget {
-  const NewExpense({super.key});
+  const NewExpense({super.key, required this.onAddExpense});
+
+  final void Function(Expense newExpense) onAddExpense;
 
   @override
   State<NewExpense> createState() {
@@ -11,6 +14,8 @@ class NewExpense extends StatefulWidget {
 }
 
 class _NewExpenseState extends State<NewExpense> {
+  _NewExpenseState();
+
   /* String _enteredTitle = '';
 
   void _saveTitleInput(String inputValue) {
@@ -22,7 +27,50 @@ class _NewExpenseState extends State<NewExpense> {
 
   final _amountController = TextEditingController();
 
+  Category _selectedCategory = Category.leisure; // default category
+
   DateTime? _selectedDate;
+
+  void _submitExpenseData() {
+    final enteredAmount = double.tryParse(_amountController
+        .text); // tryParce tries to convert the string given to it into a double; returns the double if successful; returns null if the string is not a valid number
+    final amountIsInvalid = enteredAmount == null || enteredAmount <= 0;
+
+    // trim can be called on a string to remove the leading and following white spaces in the string; returns a string itself
+
+    if (_titleController.text.trim().isEmpty ||
+        amountIsInvalid ||
+        _selectedDate == null) {
+      showDialog(
+        context: context, // context of the state class
+        builder: (ctx) => AlertDialog(
+          // context ctx of the widget being passed to the builder; this context will be passed automatically by flutter
+          title: const Text('Invalid Input'),
+          content: const Text(
+              'Please make sure a valid title, amount, date and category was entered!'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+              },
+              child: const Text('Okay'),
+            )
+          ],
+        ),
+      );
+      return;
+    }
+
+    Expense newExpense = Expense(
+        title: _titleController.text.trim(),
+        amount: enteredAmount,
+        date: _selectedDate!,
+        category: _selectedCategory);
+
+    widget.onAddExpense(newExpense);
+
+    Navigator.pop(context);
+  }
 
   void _presentDatePicker() async {
     final currentDate = DateTime.now();
@@ -73,7 +121,8 @@ class _NewExpenseState extends State<NewExpense> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 48, 16,
+          16), // 48 from the top to avoid obscuring the contents of the modal overlay (since it's full screen) by device camera and stuff
       child: Column(
         children: [
           TextField(
@@ -132,10 +181,38 @@ class _NewExpenseState extends State<NewExpense> {
             ],
           ),
           const SizedBox(
-            height: 10,
+            height: 16,
           ),
           Row(
             children: [
+              // Category.values returns a List of type Category that has all the values of the enum Category in the order in which they were specified in the enum definition
+              // DropdownMenuItem (value: <value>, child: <Widget>) returns a DropdownMenuItem widget of type DropdownMenuItem <type_of_<value>> and associates the value <value> with that widget (the value can be of any type, its a dynamic type)
+              // items argument wants a List of DropdownMenuItem <dynamic> values that will be placed in the dropdown menu in the order they appear in the list. the type <dynamic> will be the common type of the dropdownmenuitem object in the list
+              // onChanged wants a function as it's argument (this function should be void Function (<type_of_<value>?>)?) and calls this function once a DropdownMenuItem is selected in the menu and passes value associated to that DropdownMenuItem widget that was selected, to that function
+              // calling the .name getter on any enum value returns that enum value as a string
+              DropdownButton(
+                value:
+                    _selectedCategory, // currently selected drop down menu item will be set to show _selectedCategory, which is indeed the currently selected drop down menu item; without this, no item will be shown on the button even if it was selected
+                items: Category.values
+                    .map(
+                      (category) => DropdownMenuItem(
+                        value: category,
+                        child: Text(
+                          category.name.toUpperCase(),
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) {
+                    return;
+                  }
+                  setState(() {
+                    _selectedCategory = value;
+                  });
+                },
+              ),
+              const Spacer(),
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(
@@ -153,6 +230,7 @@ class _NewExpenseState extends State<NewExpense> {
                   print(_titleController
                       .text); // text method of a TextEditingController object returns the last saved String in the object
                   print(_amountController.text);
+                  _submitExpenseData();
                 },
                 child: const Text(
                   'Save Expense',

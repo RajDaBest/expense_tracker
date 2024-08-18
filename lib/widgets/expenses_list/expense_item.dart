@@ -17,9 +17,13 @@ class ExpenseItem extends StatelessWidget {
           horizontal: 20,
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               expense.title,
+              style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                  fontSize:
+                      18), // access the titleLarge theme settings that was set up globally by accessing the context of the parent object to which these themes were being applied; and then set this theme of titleLarge to the current text widget; we also override the font size of the titleLarge theme;
             ),
             const SizedBox(
               height: 4,

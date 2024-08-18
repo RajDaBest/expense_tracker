@@ -1,3 +1,4 @@
+import 'package:expense_tracker/widgets/chart/chart.dart';
 import 'package:expense_tracker/widgets/expenses_list/expenses_list.dart';
 import 'package:expense_tracker/models/expense.dart';
 import 'package:expense_tracker/widgets/new_expense.dart';
@@ -13,6 +14,41 @@ class Expenses extends StatefulWidget {
 }
 
 class _ExpensesState extends State<Expenses> {
+  void _registerNewExpense(Expense newExpense) {
+    setState(() {
+      _registeredExpenses.add(newExpense);
+    });
+  }
+
+  void _removeExpense(Expense expense) {
+    final int expenseIndex = _registeredExpenses.indexOf(expense);
+    setState(() {
+      _registeredExpenses.remove(expense);
+    });
+    ScaffoldMessenger.of(context)
+        .clearSnackBars(); // clear any previous snack bar on the screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      // context of the current state class
+      SnackBar(
+        action: SnackBarAction(
+          // creates a kind of button in the snack bar
+          label: 'Undo', // label of the button
+          onPressed: () {
+            // what to do when the button is pressed
+            _registeredExpenses.insert(
+              expenseIndex,
+              expense,
+            );
+          },
+        ),
+        content: Text(
+          // actual content that will be displayed in the snack bar
+          'Expense ${expense.title} removed',
+        ),
+      ),
+    );
+  }
+
   final List<Expense> _registeredExpenses = [
     Expense(
       title: 'Flutter Course',
@@ -30,10 +66,14 @@ class _ExpensesState extends State<Expenses> {
 
   void _openAddExpenseOverlay() {
     showModalBottomSheet(
+      scrollControlDisabledMaxHeightRatio: double.infinity,
+      isScrollControlled:
+          true, // both of these statements together make the overlay take up all the screen space
       context: context,
-      builder: (ctx) =>
-          const NewExpense(), // builder wants a function that takes a BuildContext argument (given to it automatically by flutter) which is the context of the showModalBottomSheet function and returns a widget to be displayed in the modal sheet
-    );
+      builder: (ctx) => NewExpense(
+        onAddExpense: _registerNewExpense,
+      ),
+    ); // builder wants a function that takes a BuildContext argument (given to it automatically by flutter) which is the context of the showModalBottomSheet function and returns a widget to be displayed in the modal sheet
   }
 
   // there is a globally available BuildContext object called context available since we're in a class that extends State.
@@ -48,6 +88,17 @@ class _ExpensesState extends State<Expenses> {
 
   @override
   Widget build(BuildContext context) {
+    Widget mainContent = const Center(
+      child: Text('No expense found. Start adding some!'),
+    );
+
+    if (_registeredExpenses.isNotEmpty) {
+      mainContent = ExpensesList(
+        expenses: _registeredExpenses,
+        onRemoveExpense: _removeExpense,
+      );
+    }
+
     // this context argument is passed automatically by flutter and is not the one provided by State
     return Scaffold(
       appBar: AppBar(
@@ -61,12 +112,10 @@ class _ExpensesState extends State<Expenses> {
       ),
       body: Column(
         children: [
-          const Text('The chart'),
+          Chart(expenses: _registeredExpenses),
           Expanded(
             // without the expanded widget, since we have a column (technically ListView) inside of another column, flutter wouldn't know how to restrict the inner column and how to size it
-            child: ExpensesList(
-              expenses: _registeredExpenses,
-            ),
+            child: mainContent,
           ),
         ],
       ),
